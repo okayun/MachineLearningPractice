@@ -34,8 +34,8 @@ using std::cerr;
 using std::endl;
 
 class Replay {
-  public:
-	std::pair<int, int> currentPosition, nextPosition;
+public:
+  std::pair<int, int> currentPosition, nextPosition;
 	float reward;
 	int action_index;
 
