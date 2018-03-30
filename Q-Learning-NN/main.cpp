@@ -36,14 +36,12 @@ using std::endl;
 class Replay {
 public:
   std::pair<int, int> currentPosition, nextPosition;
-	float reward;
-	int action_index;
+  float reward;
+  int action_index;
 
-	Replay() {}
-	Replay(std::pair<int, int> cp, int action_index, std::pair<int, int> np,
-		   float reward)
-		: currentPosition(cp), action_index(action_index), nextPosition(np),
-		  reward(reward) {}
+  Replay() {}
+  Replay(std::pair<int, int> cp, int action_index, std::pair<int, int> np, float reward)
+	: currentPosition(cp), action_index(action_index), nextPosition(np), reward(reward) {}
 };
 
 const double ALPHA = 0.1; // 学習率
