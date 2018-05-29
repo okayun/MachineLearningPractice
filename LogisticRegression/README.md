@@ -3,6 +3,9 @@
 - stochastic_gradient_descent.cc : 確率的勾配降下法でパラメータを調整 (気が向いたら載せる)  
 論理積・論理和を回帰分析するだけのコード  
 
+**注意**
+ここでの実装は線形分離可能なデータにしか使えません (今後実装予定)
+
 ## 参考サイト
 - [第18回 ロジスティック回帰 : はじめよう 機械学習 技術評論社](http://gihyo.jp/dev/serial/01/machine-learning/0018)
 - [やる夫で学ぶ機械学習 - ロジスティック回帰 -](http://tkengo.github.io/blog/2016/06/04/yaruo-machine-learning5/)
