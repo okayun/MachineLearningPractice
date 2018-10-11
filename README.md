@@ -1,4 +1,5 @@
 # MachineLearningPractice
 機械学習に関するソースコードを置いています
 - LogisticRegression : プログラミング演習のために書いたロジスティック回帰
+
 Q学習やニューラルネットのソースコードは移動させたためありません.
