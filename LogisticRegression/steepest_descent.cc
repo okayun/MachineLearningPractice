@@ -10,18 +10,27 @@
 #include <tuple>
 #include <vector>
 
+/**
+ * and, or をロジスティック回帰するためのソースコード (xor は失敗するはず)
+ * 勾配の最適化手法は 最急降下法
+ * xor も分類したいならソフトマックス関数を使って回帰すること (ただしいろいろ書き換えないといけないので注意)
+ */
+
 using std::cin;
 using std::cout;
 using std::cerr;
 using std::endl;
 
-double learning_rate = 0.1;
-const double EPS = 1e-7;
+// ステップサイズ
+constexpr static double kStepSize = 0.01;
+// しきい値
+constexpr static double kEPS = 1e-4;
+// inputの数 (今回は2) + バイアス
+constexpr static int kInputSize = 2 + 1;
 
-const int InputSize = 3; // inputの数 + バイアス
+/************************************* テンプレート ****************************************/
 
-/*****************************************************************************************/
-
+// std::pair を cout, cerr で出力できるようにする
 template <typename T>
 std::ostream& operator << (std::ostream& os, std::pair<T, T>& p) {
   os << "(" << p.first << ", " << p.second << ")";
@@ -29,6 +38,7 @@ std::ostream& operator << (std::ostream& os, std::pair<T, T>& p) {
   return os;
 }
 
+// std::vector を cout, cerr で出力できるようにする
 template <typename T>
 std::ostream& operator << (std::ostream& os, std::vector<T>& v) {
   os << "[";
@@ -65,7 +75,7 @@ std::vector<T> operator - (const std::vector<T>& a, const std::vector<U>& b) {
   return ret;
 }
 
-/*****************************************************************************************/
+/************************************* テンプレート ****************************************/
 
 // シグモイド関数
 inline double sigmoid(const double& t) {
@@ -73,35 +83,38 @@ inline double sigmoid(const double& t) {
 }
 
 int main() {
+  // 入力データ
+  std::vector <std::vector<int> > data = { { 0, 0, 1 }, { 1, 0, 1 }, { 0, 1, 1 }, { 1, 1, 1 } }; // 3つめはバイアス
+  // 入力に対する正解データ
   std::vector<int> and_ = { 0, 0, 0, 1 }, or_ = { 0, 1, 1, 1 }, xor_ = { 0, 1, 1, 0 };
-
-  std::vector <std::vector<int> > input = { { 0, 0, 1 },{ 1, 0, 1 },{ 0, 1, 1 },{ 1, 1, 1 } }; // 3つめはバイアス
-  std::vector<int> answer = xor_;
-  std::vector<double> theta(3);
+  // xorを分類する場合
+  std::vector<int> answer = or_;
+  // パラメータ
+  std::vector<double> theta(kInputSize);
 
   std::random_device rnd;
   std::mt19937 mt(rnd());
   std::uniform_real_distribution<> dis(-1.0, 1.0);
 
-  for (int i = 0; i < InputSize; ++i) {
+  // パラメータを適当に初期化 (多分0でもOK)
+  for (int i = 0; i < kInputSize; ++i) {
     theta[i] = dis(mt);
   }
 
-  bool flag;
-
+  // 一定回数繰り返す (収束しなかったらずっとループするので一応上限を設ける)
   for (int iter = 0; iter <= 100000000; ++iter) {
-    // check
+    // 途中経過を出力
     if (iter % 100000 == 0) {
       cout << "iteration = " << iter << endl;
       cout << "theta = " << theta << endl;
 
-      for (int i = 0; i < int(input.size()); ++i) {
+      for (int i = 0; i < int(data.size()); ++i) {
         double a = 0;
-        for (int j = 0; j < InputSize; ++j) {
-          a += theta[j] * input[i][j];
+        for (int j = 0; j < kInputSize; ++j) {
+          a += theta[j] * data[i][j];
         }
 
-        cout << "input = " << input[i] << endl;
+        cout << "data[" << i << "] = " << data[i] << endl;
         cout << "answer = " << answer[i] << endl;
         cout << "result = " << sigmoid(a) << endl;
         cout << endl;
@@ -109,39 +122,39 @@ int main() {
     }
 
     // 最急降下法
+    // パラメータの勾配を格納するvector
+    std::vector<double> grad(kInputSize, 0.0);
 
-    std::vector<double> grad(InputSize, 0.0);
-
-    // j 番目の \theta の勾配を求める
-    for (int j = 0; j < InputSize; ++j) {
-
-      for (int i = 0; i < int(input.size()); ++i) {
+    // パラメータの j 番目の勾配を求める
+    for (int j = 0; j < kInputSize; ++j) {
+      // ここわかりにくいかもしれない
+      for (int i = 0; i < int(data.size()); ++i) {
         double a = 0;
-        for (int k = 0; k < InputSize; ++k) {
-          a += theta[k] * input[i][k];
+        for (int k = 0; k < kInputSize; ++k) {
+          a += theta[k] * data[i][k];
         }
         double y = sigmoid(a);
 
-        grad[j] += (y - answer[i]) * input[i][j];
+        grad[j] += (y - answer[i]) * data[i][j];
       }
     }
 
-    // 勾配の収束具合の確認
+    // 収束具合の確認
     bool is_convergence = true;
     for (int i = 0; i < int(grad.size()); ++i) {
-      if (fabs(grad[i]) > EPS) {
+      if (fabs(grad[i]) > kEPS) {
         is_convergence = false;
+        break;
       }
     }
 
-    // i 番目のデータについて, \theta の値が収束していたら終了
+    // パラメータが収束していたら終了
     if (is_convergence) {
       break;
     }
 
-    // \theta の更新
-    grad = learning_rate * grad;
-    flag = true;
+    // パラメータ の更新
+    grad = kStepSize * grad;
     theta = theta - grad;
   }
 
@@ -150,19 +163,17 @@ int main() {
   cout << "theta = " << theta << endl;
   cout << endl;
 
-  for (int i = 0; i < int(input.size()); ++i) {
+  for (int i = 0; i < int(data.size()); ++i) {
     double a = 0;
-    for (int j = 0; j < InputSize; ++j) {
-      a += input[i][j] * theta[j];
+    for (int j = 0; j < kInputSize; ++j) {
+      a += data[i][j] * theta[j];
     }
 
-    cout << "input = " << input[i] << endl;
+    cout << "data[" << i << "] = " << data[i] << endl;
     cout << "answer = " << answer[i] << endl;
     cout << "result = " << sigmoid(a) << endl;
     cout << endl;
   }
-
-  //system("pause");
 
   return 0;
 }
